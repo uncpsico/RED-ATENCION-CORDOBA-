@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<meta name="theme-color" content="#faf8f5">
+<meta name="description" content="Mapa de instituciones y líneas de ayuda de la Provincia de Córdoba: judiciales, salud, niñez, organizaciones sociales y atención psicosocial.">
+<title>Red de Atención — Provincia de Córdoba</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📍</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<!-- Estilos de la pantalla de carga: van en línea para que se vea bien
+     desde el primer instante, antes de que carguen el CSS y el JS. -->
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #faf8f5; }
+  #carga { position: fixed; inset: 0; z-index: 5000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; padding: 24px; background: #faf8f5; color: #433e3c; font-family: 'Space Grotesk', system-ui, -apple-system, 'Segoe UI', sans-serif; text-align: center; transition: opacity .45s ease, visibility .45s; }
+  #carga.listo { opacity: 0; visibility: hidden; }
+  #carga .c-pin { width: 54px; height: 54px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); border: 3px solid #b06a6c; background: #fcfbf9; box-shadow: 3px 6px 14px rgba(67,62,60,.18); display: flex; align-items: center; justify-content: center; animation: c-salto 1.4s ease-in-out infinite; }
+  #carga .c-pin span { transform: rotate(45deg); font-size: 24px; line-height: 1; }
+  #carga .c-sombra { width: 34px; height: 8px; margin-top: -8px; border-radius: 50%; background: rgba(67,62,60,.12); animation: c-sombra 1.4s ease-in-out infinite; }
+  #carga h1 { margin: 0; font-size: 22px; font-weight: 700; }
+  #carga h1 span { font-weight: 400; color: #8c8580; }
+  #carga .c-barra { width: min(220px, 60vw); height: 4px; border-radius: 4px; background: #ece6dc; overflow: hidden; }
+  #carga .c-barra i { display: block; width: 40%; height: 100%; border-radius: 4px; background: #b06a6c; animation: c-barra 1.2s ease-in-out infinite; }
+  #carga p { margin: 0; font-size: 13px; color: #8c8580; min-height: 1.4em; font-family: 'Sora', system-ui, sans-serif; }
+  #carga .c-error { display: none; flex-direction: column; align-items: center; gap: 12px; }
+  #carga.con-error .c-error { display: flex; }
+  #carga.con-error .c-barra, #carga.con-error #carga-texto { display: none; }
+  #carga.con-error .c-pin, #carga.con-error .c-sombra { animation: none; }
+  #carga .c-error button { font: inherit; font-weight: 700; font-size: 14px; color: #fcfbf9; background: #5a5451; border: 0; border-radius: 12px; padding: 10px 18px; cursor: pointer; }
+  #carga .c-urgencia { font-size: 12px; color: #8c8580; }
+  #carga .c-urgencia a { color: #b06a6c; font-weight: 700; }
+  @keyframes c-salto { 0%, 100% { transform: rotate(-45deg) translate(0, 0); } 50% { transform: rotate(-45deg) translate(7px, -7px); } }
+  @keyframes c-sombra { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(.7); opacity: .6; } }
+  @keyframes c-barra { 0% { transform: translateX(-100%); } 100% { transform: translateX(250%); } }
+  @media (prefers-reduced-motion: reduce) { #carga .c-pin, #carga .c-sombra, #carga .c-barra i { animation: none; } #carga { transition: none; } }
+</style>
+</head>
+<body>
+<!-- ============ PANTALLA DE CARGA ============ -->
+<div id="carga" role="status" aria-live="polite">
+  <div>
+    <div class="c-pin"><span>📍</span></div>
+    <div class="c-sombra"></div>
+  </div>
+  <h1>Red de Atención <span>· Córdoba</span></h1>
+  <div class="c-barra"><i></i></div>
+  <p id="carga-texto">Cargando el mapa de la provincia…</p>
+  <div class="c-error">
+    <p id="carga-error">No se pudo cargar el mapa. Revisá tu conexión.</p>
+    <button type="button" data-accion="recargarPagina">Reintentar</button>
+    <div class="c-urgencia">Si hay peligro ahora, llamá al <a href="tel:911">911</a></div>
+  </div>
+</div>
+
+<!-- ============ HEADER ============ -->
+<header id="app-header" class="app-header bg-[#faf8f5] shadow-[0_2px_10px_rgba(0,0,0,0.03)] border-b border-[#ece8e0] z-50 relative flex flex-col">
+  <div class="px-4 sm:px-5 pt-3 pb-2 flex items-center gap-3 flex-wrap">
+    <h1 class="text-lg sm:text-xl font-bold text-[#433e3c] whitespace-nowrap">Red de Atención <span class="font-normal text-[#8c8580]">· Córdoba</span></h1>
+    <button data-modal="modal-urgencias" class="bg-[#b06a6c] text-[#fcfbf9] px-3.5 py-1.5 rounded-xl font-bold shadow-sm hover:bg-[#97585a] transition flex items-center gap-1.5 text-sm whitespace-nowrap">🚨 Urgencias</button>
+
+    <div class="w-full sm:w-auto sm:flex-1 flex items-center gap-2 min-w-0">
+      <!-- Buscador -->
+      <div class="relative flex-1 min-w-0 sm:max-w-md">
+        <input id="search" type="search" autocomplete="off" placeholder="Buscar dirección, calle, barrio o localidad…"
+          class="w-full border border-[#e6e1d8] bg-[#fcfbf9] rounded-xl pl-9 pr-3 py-2 text-sm outline-none focus:border-[#a66d4f] transition">
+        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-[#9e9791] text-sm pointer-events-none">🔎</span>
+        <div id="search-results" class="hidden absolute left-0 w-[calc(100vw-2rem)] sm:w-auto sm:right-auto sm:min-w-[360px] top-full mt-1 bg-[#fcfbf9] border border-[#e6e1d8] rounded-xl shadow-xl z-[900] overflow-hidden max-h-[60vh] max-h-[60dvh] overflow-y-auto custom-scroll"></div>
+      </div>
+      <div class="flex gap-2 ml-auto shrink-0">
+        <button data-accion="openLugares" title="Lugares" class="bg-[#f2efe9] text-[#756f6b] border border-[#e6e1d8] px-2.5 sm:px-3.5 py-1.5 rounded-xl font-bold hover:bg-[#e8e4dc] transition text-sm whitespace-nowrap">📋<span class="hidden md:inline"> Lugares</span></button>
+        <button data-modal="modal-categorias" title="Categorías" class="bg-[#f2efe9] text-[#756f6b] border border-[#e6e1d8] px-2.5 sm:px-3.5 py-1.5 rounded-xl font-bold hover:bg-[#e8e4dc] transition text-sm whitespace-nowrap">⚙️<span class="hidden md:inline"> Categorías</span></button>
+        <button data-accion="toggleVisualMode" id="btn-visual" title="Cambiar íconos" class="hidden sm:block bg-[#f2efe9] text-[#756f6b] border border-[#e6e1d8] px-3.5 py-1.5 rounded-xl font-bold hover:bg-[#e8e4dc] transition text-sm whitespace-nowrap">Glifos</button>
+        <button data-accion="openAgregar" title="Agregar institución" class="bg-[#5a5451] text-[#fcfbf9] px-2.5 sm:px-3.5 py-1.5 rounded-xl font-bold hover:bg-[#433e3c] transition whitespace-nowrap text-sm">➕<span class="hidden md:inline"> Agregar</span></button>
+      </div>
+    </div>
+  </div>
+  <div class="px-4 sm:px-5 pb-3 pt-1 flex gap-2 overflow-x-auto hide-scrollbar" id="filters"></div>
+  <div class="solo-admin px-4 sm:px-5 pb-2 -mt-1 flex items-center gap-2 text-xs text-[#8a6a2c]">
+    <span class="bg-[#fdf6e7] border border-[#ecdcb6] rounded-lg px-2 py-0.5 font-space font-bold">🔑 Administración</span>
+    <span id="admin-email" class="truncate"></span>
+    <button data-accion="salirAdmin" class="ml-auto font-space font-bold underline decoration-[#8a6a2c]/40">Salir</button>
+  </div>
+</header>
+
+<!-- ============ MAPA ============ -->
+<div id="map-container"></div>
+
+<!-- Aviso modo elegir ubicación -->
+<div id="pick-banner" class="hidden fixed left-1/2 -translate-x-1/2 z-[800] bg-[#433e3c] text-[#fcfbf9] pl-5 pr-2 py-2 rounded-2xl shadow-xl items-center gap-3 font-space font-bold text-sm" style="top: calc(var(--header-h, 130px) + 12px)">
+  <span>📍 Tocá el mapa donde está la institución</span>
+  <button data-accion="cancelPick" class="bg-[#5a5451] hover:bg-[#6b6461] px-3 py-1.5 rounded-xl">Cancelar</button>
+</div>
+
+<div class="safe-bottom absolute left-4 z-[400] bg-[#fcfbf9]/95 backdrop-blur-md px-4 py-2 rounded-xl shadow-sm text-sm font-space font-bold border border-[#ece8e0] text-[#756f6b]" id="counter">Cargando mapa…</div>
+
+<button data-modal="modal-ayuda" class="safe-bottom absolute right-4 z-[400] bg-[#ebd4d6] text-[#8e4a55] px-5 py-3 rounded-2xl font-space font-bold shadow-[0_4px_16px_rgba(235,212,214,0.7)] hover:bg-[#dfc4c7] transition flex items-center gap-2 border border-[#dfc4c7]/50">
+  💡 <span class="hidden min-[420px]:inline">¿Cómo pedir ayuda?</span><span class="min-[420px]:hidden">Ayuda</span>
+</button>
+
+<!-- ============ PANEL DETALLE ============ -->
+<div id="panel-detalle" class="fixed inset-y-0 right-0 w-full sm:w-[390px] bg-[#fcfbf9] shadow-2xl z-[500] transform translate-y-full sm:translate-y-0 sm:translate-x-full transition-transform duration-300 ease-in-out flex flex-col rounded-t-3xl sm:rounded-none">
+  <div class="flex-1 overflow-y-auto custom-scroll p-6 sm:p-7 pb-28">
+    <div class="flex justify-between items-start mb-4">
+      <span id="det-cat" class="px-3 py-1 rounded-full text-xs font-space font-bold border flex items-center gap-1.5"></span>
+      <div class="flex items-center gap-2">
+        <button data-accion="editarActual" class="solo-admin text-sm font-space font-bold text-[#5a5451] bg-[#f2efe9] hover:bg-[#e8e4dc] px-3 h-9 rounded-full transition">✏️ Editar</button>
+        <button data-accion="cerrarDetalle" aria-label="Cerrar" class="text-[#8c8580] hover:text-[#433e3c] text-2xl bg-[#f2efe9] w-9 h-9 rounded-full flex items-center justify-center transition">&times;</button>
+      </div>
+    </div>
+    <h2 id="det-name" class="text-2xl font-bold mb-5 leading-tight text-[#433e3c]"></h2>
+
+    <div class="space-y-4 text-sm font-medium text-[#5a5451]">
+      <a id="det-address" target="_blank" rel="noopener" class="flex gap-3 items-start group rounded-xl -m-2 p-2 hover:bg-[#f4efe8] transition">
+        <span class="text-lg leading-none mt-0.5">📍</span>
+        <span><span id="det-address-text" class="leading-relaxed block text-[#433e3c]"></span><span class="text-xs font-space font-bold text-[#a66d4f] group-hover:underline">Abrir en Google Maps</span></span>
+      </a>
+      <div class="flex gap-3 items-start">
+        <span class="text-lg leading-none mt-1">📞</span>
+        <div id="det-phones" class="flex flex-wrap gap-2"></div>
+      </div>
+      <div class="flex gap-3 items-start"><span class="text-lg leading-none">🕒</span> <p id="det-hours" class="leading-relaxed"></p></div>
+      <div class="flex gap-3 items-start"><span class="text-lg leading-none">✉️</span> <p id="det-contact" class="leading-relaxed break-all"></p></div>
+    </div>
+
+    <div class="mt-6 bg-[#f4efe8] border border-[#e6e1d8] p-5 rounded-2xl">
+      <h3 class="font-bold text-[#433e3c] mb-2 font-space">Servicios brindados</h3>
+      <p id="det-desc" class="text-[#5a5451] text-sm leading-relaxed"></p>
+    </div>
+
+    <div class="solo-admin mt-6 border border-dashed border-[#dcc3c4] rounded-2xl p-4 flex items-center gap-3">
+      <div class="flex-1 text-xs text-[#756f6b] leading-relaxed">¿Este lugar dejó de funcionar o cambió de dirección?</div>
+      <button data-accion="eliminarActual" class="shrink-0 text-sm font-space font-bold text-[#b06a6c] border border-[#dcc3c4] px-3 py-2 rounded-xl hover:bg-[#b06a6c] hover:text-[#fcfbf9] transition">Eliminar</button>
+    </div>
+  </div>
+
+  <div class="absolute bottom-0 left-0 right-0 p-4 bg-[#fcfbf9] border-t border-[#ece8e0] flex gap-3 shadow-[0_-4px_20px_rgba(0,0,0,0.03)]" style="padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px))">
+    <a id="btn-maps" target="_blank" rel="noopener" class="flex-1 bg-[#f2efe9] text-[#5a5451] text-center py-3.5 rounded-xl font-space font-bold hover:bg-[#e8e4dc] transition">🧭 Cómo llegar</a>
+    <a id="btn-call" class="flex-1 bg-[#798f75] text-[#fcfbf9] text-center py-3.5 rounded-xl font-space font-bold hover:bg-[#687e64] transition">📞 Llamar</a>
+  </div>
+</div>
+
+<!-- ============ MODAL CATEGORÍAS ============ -->
+<div id="modal-categorias" class="modal-wrap fixed inset-0 bg-black/30 z-[620] hidden flex-col items-center justify-center p-4 backdrop-blur-sm">
+  <div class="bg-[#fcfbf9] rounded-3xl w-full max-w-md shadow-2xl overflow-hidden flex flex-col modal-box">
+    <div class="p-6 border-b border-[#ece8e0] flex justify-between items-center bg-[#faf8f5]">
+      <h2 class="text-xl font-space font-bold text-[#433e3c]">Categorías</h2>
+      <button data-modal="modal-categorias" class="text-[#8c8580] hover:text-[#433e3c] text-3xl leading-none">&times;</button>
+    </div>
+    <div class="p-6 overflow-y-auto custom-scroll">
+      <div id="form-categoria" data-enviar="guardarCategoria" class="space-y-3 bg-[#f4efe8] border border-[#e6e1d8] rounded-2xl p-4 mb-6">
+        <h3 class="font-space font-bold text-[#433e3c]">Nueva categoría</h3>
+        <div><label class="block text-xs font-bold text-[#756f6b] mb-1">Nombre</label><input required id="c-name" maxlength="40" placeholder="Ej. Comedores comunitarios" class="w-full border border-[#dcd6cf] rounded-xl p-2.5 bg-[#fcfbf9] outline-none focus:border-[#a66d4f]"></div>
+        <div class="grid grid-cols-[1fr_auto] gap-3 items-end">
+          <div><label class="block text-xs font-bold text-[#756f6b] mb-1">Emoji</label><input required id="c-emoji" maxlength="8" placeholder="🍲" class="w-full border border-[#dcd6cf] rounded-xl p-2.5 bg-[#fcfbf9] outline-none focus:border-[#a66d4f]"></div>
+          <div><label class="block text-xs font-bold text-[#756f6b] mb-1">Color</label><input id="c-color" type="color" value="#6f8fa6" class="w-16 h-[46px] border border-[#dcd6cf] rounded-xl bg-[#fcfbf9] p-1 cursor-pointer"></div>
+        </div>
+        <div class="flex flex-wrap gap-1.5" id="emoji-sugeridos"></div>
+        <button type="button" data-accion="enviarForm" class="w-full bg-[#5a5451] text-[#fcfbf9] font-space font-bold py-3 rounded-xl hover:bg-[#433e3c] transition">Crear categoría</button>
+      </div>
+      <h3 class="font-space font-bold text-[#433e3c] mb-2">Categorías actuales</h3>
+      <div id="lista-categorias" class="space-y-2"></div>
+      <p class="text-xs text-[#9e9791] mt-3 leading-relaxed">Si eliminás una categoría, sus lugares y números pasan a "Otro".</p>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL LUGARES ============ -->
+<div id="modal-lugares" class="modal-wrap fixed inset-0 bg-black/30 z-[600] hidden flex-col items-center justify-center p-4 backdrop-blur-sm">
+  <div class="bg-[#fcfbf9] rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col modal-box">
+    <div class="p-6 border-b border-[#ece8e0] flex justify-between items-center bg-[#faf8f5]">
+      <h2 class="text-xl font-space font-bold text-[#433e3c]">Lugares de la red</h2>
+      <button data-modal="modal-lugares" class="text-[#8c8580] hover:text-[#433e3c] text-3xl leading-none">&times;</button>
+    </div>
+    <div class="px-6 pt-4">
+      <input id="lugares-filtro" data-input="renderLugares" placeholder="Filtrar por nombre, dirección o categoría…" class="w-full border border-[#dcd6cf] rounded-xl p-2.5 bg-[#faf8f5] outline-none focus:border-[#a66d4f] text-sm">
+    </div>
+    <div id="lista-lugares" class="p-6 pt-4 overflow-y-auto custom-scroll space-y-5"></div>
+    <div class="px-6 py-4 border-t border-[#ece8e0] flex justify-between items-center gap-3 bg-[#faf8f5]">
+      <button data-modal="modal-lugares" data-accion="openAgregar" class="ml-auto bg-[#5a5451] text-[#fcfbf9] px-4 py-2 rounded-xl font-space font-bold text-sm hover:bg-[#433e3c]">➕ Agregar lugar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL AGREGAR ============ -->
+<div id="modal-agregar" class="modal-wrap fixed inset-0 bg-black/30 z-[600] hidden flex-col items-center justify-center p-4 backdrop-blur-sm">
+  <div class="bg-[#fcfbf9] rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col modal-box">
+    <div class="p-6 border-b border-[#ece8e0] flex justify-between items-center bg-[#faf8f5]">
+      <h2 id="agregar-titulo" class="text-xl font-space font-bold text-[#433e3c]">Agregar institución</h2>
+      <button data-modal="modal-agregar" class="text-[#8c8580] hover:text-[#433e3c] text-3xl leading-none">&times;</button>
+    </div>
+    <div class="px-6 pt-4">
+      <div id="agregar-tabs" class="grid grid-cols-2 gap-1 bg-[#f2efe9] p-1 rounded-xl" role="tablist">
+        <button type="button" id="tab-inst" data-accion="setAgregarTab" data-arg="inst" class="py-2 rounded-lg font-space font-bold text-sm transition">🏛️ Institución</button>
+        <button type="button" id="tab-urg" data-accion="setAgregarTab" data-arg="urg" class="py-2 rounded-lg font-space font-bold text-sm transition">🚨 <span class="hidden sm:inline">Número de u</span><span class="sm:hidden">U</span>rgencia</button>
+      </div>
+      <p class="mt-3 text-xs text-[#5f7a77] bg-[#eef1f0] border border-[#d6dfdd] rounded-xl px-3 py-2 leading-relaxed">
+        <span>✓ Se publica al instante y queda guardado para todas las personas que usan la página, en cualquier dispositivo.</span>
+      </p>
+    </div>
+
+    <!-- Número de urgencia -->
+    <div id="form-urgencia" data-enviar="guardarUrgencia" class="hidden p-6 overflow-y-auto custom-scroll space-y-4">
+      <div><label class="block text-sm font-bold text-[#756f6b] mb-1">Nombre de la línea *</label><input required id="u-name" maxlength="60" placeholder="Ej. Guardia Hospital de Niños" class="w-full border border-[#dcd6cf] rounded-xl p-3 bg-[#faf8f5] outline-none focus:border-[#b06a6c] focus:bg-[#fcfbf9] transition"></div>
+      <div><label class="block text-sm font-bold text-[#756f6b] mb-1">Categoría *</label>
+        <select required id="u-cat" data-change="onCatSelect" class="w-full border border-[#dcd6cf] rounded-xl p-3 bg-[#faf8f5] outline-none focus:border-[#b06a6c] focus:bg-[#fcfbf9] transition"></select></div>
+      <div><label class="block text-sm font-bold text-[#756f6b] mb-1">Número *</label><input required id="u-phone" inputmode="tel" maxlength="30" placeholder="Ej. 0351 434 6060 o 0800 555 1234" class="w-full border border-[#dcd6cf] rounded-xl p-3 bg-[#faf8f5] outline-none focus:border-[#b06a6c] focus:bg-[#fcfbf9] transition font-space font-bold text-lg"></div>
+      <div><label class="block text-sm font-bold text-[#756f6b] mb-1">Para qué sirve / horario</label><input id="u-desc" maxlength="80" placeholder="Ej. Urgencias pediátricas, 24 hs" class="w-full border border-[#dcd6cf] rounded-xl p-3 bg-[#faf8f5] outline-none focus:border-[#b06a6c] focus:bg-[#fcfbf9] transition"></div>
+      <button type="button" data-accion="enviarForm" class="w-full bg-[#b06a6c] text-[#fcfbf9] font-space font-bold py-4 rounded-xl hover:bg-[#97585a] transition shadow-md">Agregar a Urgencias</button>
+    </div>
+
+    <!-- Institución -->
+    <div id="form-agregar" data-enviar="guardarInstitucion" class="p-6 overflow-y-auto custom-scroll space-y-4">
+      <div><label class="block text-sm font-bold text-[#756f6b] mb-1">Nombre *</label><input required id="f-name" maxlength="120" class="w-full border border-[#dcd6cf] rounded-xl p-3 bg-[#faf8f5] outline-none focus:border-[#a66d4f] focus:bg-[#fcfbf9] transition"></div>
+      <div><label class="block text-sm font-bold text-[#756f6b] mb-1">Categoría *</label>
+        <select required id="f-cat" data-change="onCatSelect" class="w-full border border-[#dcd6cf] rounded-xl p-3 bg-[#faf8f5] outline-none focus:border-[#a66d4f] focus:bg-[#fcfbf9] transition"></select></div>
+
+      <div class="bg-[#f0f2ef] p-4 rounded-2xl border border-[#dcd6cf] space-y-3">
+        <div class="grid grid-cols-1 sm:grid-cols-[1fr_11rem] gap-3">
+          <div><label class="block text-sm font-bold text-[#5a5451] mb-1">Calle y número *</label><input required id="f-address" maxlength="160" autocomplete="off" placeholder="Ej. Entre Ríos 680" data-input="onDireccionInput" class="w-full border border-[#c5cfc3] rounded-xl p-3 bg-[#fcfbf9] outline-none focus:border-[#798f75] transition"></div>
+          <div><label class="block text-sm font-bold text-[#5a5451] mb-1">Localidad *</label><input required id="f-loc" list="lista-localidades" value="Córdoba" autocomplete="off" data-input="onDireccionInput" class="w-full border border-[#c5cfc3] rounded-xl p-3 bg-[#fcfbf9] outline-none focus:border-[#798f75] transition"></div>
+        </div>
+        <datalist id="lista-localidades"></datalist>
+        <div id="f-geo" class="text-sm leading-relaxed rounded-xl px-3 py-2 bg-[#fcfbf9] border border-[#dfe5dd] text-[#756f6b]">📍 Escribí la dirección y la ubicamos en el mapa automáticamente.</div>
+        <div class="flex flex-wrap gap-2 items-center">
+          <button type="button" data-accion="startPick" class="text-sm bg-[#fcfbf9] border border-[#c5cfc3] text-[#687e64] font-space font-bold px-3 py-2 rounded-xl hover:bg-[#e6ebe4] transition">✋ Corregir en el mapa</button>
+          <details class="text-xs text-[#5a5451]">
+            <summary class="cursor-pointer font-bold text-[#798f75] py-2">Coordenadas</summary>
+            <div class="grid grid-cols-2 gap-3 mt-2">
+              <div><label class="block text-xs font-bold text-[#798f75] mb-1">Latitud</label><input id="f-lat" type="number" step="any" data-input="geoManual" class="w-full border border-[#c5cfc3] rounded-lg p-2 bg-[#fcfbf9] outline-none focus:border-[#798f75]"></div>
+              <div><label class="block text-xs font-bold text-[#798f75] mb-1">Longitud</label><input id="f-lng" type="number" step="any" data-input="geoManual" class="w-full border border-[#c5cfc3] rounded-lg p-2 bg-[#fcfbf9] outline-none focus:border-[#798f75]"></div>
+            </div>
+          </details>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div><label class="block text-sm font-bold text-[#756f6b] mb-1">Teléfono</label><input id="f-phone" maxlength="80" inputmode="tel" placeholder="0351 434 3456" class="w-full border border-[#dcd6cf] rounded-xl p-3 bg-[#faf8f5] outline-none focus:border-[#a66d4f]"></div>
+        <div><label class="block text-sm font-bold text-[#756f6b] mb-1">Horario</label><input id="f-hours" maxlength="100" placeholder="Lun a vie, 8 a 14 hs" class="w-full border border-[#dcd6cf] rounded-xl p-3 bg-[#faf8f5] outline-none focus:border-[#a66d4f]"></div>
+      </div>
+      <p class="text-xs text-[#9e9791] -mt-2">Si tiene varios teléfonos, separalos con "/".</p>
+      <div><label class="block text-sm font-bold text-[#756f6b] mb-1">Contacto / Web / Email</label><input id="f-contact" maxlength="120" class="w-full border border-[#dcd6cf] rounded-xl p-3 bg-[#faf8f5] outline-none focus:border-[#a66d4f]"></div>
+      <div><label class="block text-sm font-bold text-[#756f6b] mb-1">Servicios brindados</label><textarea id="f-desc" rows="2" maxlength="600" class="w-full border border-[#dcd6cf] rounded-xl p-3 bg-[#faf8f5] outline-none focus:border-[#a66d4f] focus:bg-[#fcfbf9]"></textarea></div>
+      <button type="button" id="btn-guardar-inst" data-accion="enviarForm" class="w-full bg-[#5a5451] text-[#fcfbf9] font-space font-bold py-4 rounded-xl hover:bg-[#433e3c] transition shadow-md">Guardar institución</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL CONFIRMAR ============ -->
+<div id="modal-confirm" class="fixed inset-0 bg-black/40 z-[720] hidden flex-col items-center justify-center p-4 backdrop-blur-sm">
+  <div class="bg-[#fcfbf9] w-full max-w-sm rounded-3xl p-7 shadow-2xl text-center">
+    <div class="text-4xl mb-4">⚠️</div>
+    <h3 id="confirm-title" class="font-space text-xl font-bold text-[#433e3c] mb-2"></h3>
+    <p id="confirm-text" class="text-[#756f6b] text-sm mb-7 leading-relaxed"></p>
+    <div class="flex gap-3">
+      <button data-modal="modal-confirm" class="flex-1 bg-[#f2efe9] text-[#5a5451] font-space font-bold py-3.5 rounded-xl hover:bg-[#e8e4dc] transition">Cancelar</button>
+      <button id="confirm-ok" class="flex-1 bg-[#b06a6c] text-[#fcfbf9] font-space font-bold py-3.5 rounded-xl hover:bg-[#97585a] transition">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL URGENCIAS ============ -->
+<div id="modal-urgencias" class="modal-wrap fixed inset-0 bg-black/30 z-[600] hidden flex-col items-center justify-center p-4 backdrop-blur-sm">
+  <div class="bg-[#fcfbf9] rounded-3xl w-full max-w-md shadow-2xl overflow-hidden flex flex-col modal-box">
+    <div class="p-6 border-b border-[#ece8e0] flex justify-between items-center bg-[#f7ecec]">
+      <h2 class="text-xl font-space font-bold text-[#8e4a55] flex items-center gap-2">🚨 Líneas de urgencia</h2>
+      <button data-modal="modal-urgencias" class="text-[#8c8580] hover:text-[#433e3c] text-3xl leading-none">&times;</button>
+    </div>
+    <div class="p-6 overflow-y-auto custom-scroll space-y-3">
+      <p class="text-sm text-[#5a5451] leading-relaxed mb-1">Tocá un número para llamar. Las líneas nacionales y provinciales son gratuitas.</p>
+      <div id="urg-fijas" class="space-y-3"></div>
+      <div id="urg-custom" class="space-y-4 pt-2"></div>
+      <button data-modal="modal-urgencias" data-accion="openAgregar" data-arg="urg" class="w-full mt-2 border-2 border-dashed border-[#dcc3c4] text-[#8e4a55] font-space font-bold py-3 rounded-2xl hover:bg-[#f7ecec] transition">＋ Agregar un número de urgencia</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL AYUDA ============ -->
+<div id="modal-ayuda" class="modal-wrap fixed inset-0 bg-black/30 z-[600] hidden flex-col items-center justify-center p-4 backdrop-blur-sm">
+  <div class="bg-[#fcfbf9] rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col modal-box">
+    <div class="p-6 border-b border-[#ece8e0] flex justify-between items-center bg-[#faf8f5]">
+      <h2 class="text-xl font-space font-bold text-[#433e3c] flex items-center gap-2">💡 ¿Cómo pedir ayuda?</h2>
+      <button data-modal="modal-ayuda" class="text-[#8c8580] hover:text-[#433e3c] text-3xl leading-none">&times;</button>
+    </div>
+    <div class="p-6 overflow-y-auto custom-scroll">
+      <p class="text-sm text-[#5a5451] leading-relaxed mb-5">No tenés que tener todo resuelto para pedir ayuda. Podés empezar por cualquiera de estos pasos.</p>
+      <ol class="space-y-4">
+        <li class="flex gap-4"><span class="shrink-0 w-8 h-8 rounded-full bg-[#b06a6c] text-[#fcfbf9] font-space font-bold flex items-center justify-center text-sm">1</span>
+          <div><h3 class="font-space font-bold text-[#433e3c]">Si hay peligro ahora, llamá al 911</h3><p class="text-sm text-[#5a5451] leading-relaxed mt-1">Es la vía más rápida cuando tu vida o la de otra persona está en riesgo.</p></div></li>
+        <li class="flex gap-4"><span class="shrink-0 w-8 h-8 rounded-full bg-[#8da5a3] text-[#fcfbf9] font-space font-bold flex items-center justify-center text-sm">2</span>
+          <div><h3 class="font-space font-bold text-[#433e3c]">Hablá con alguien que sabe del tema</h3><p class="text-sm text-[#5a5451] leading-relaxed mt-1">La Línea 144, la 149 y el Polo de la Mujer (0800 888 9898) escuchan y orientan las 24 hs. Si se trata de un chico o una chica, está la línea 102.</p></div></li>
+        <li class="flex gap-4"><span class="shrink-0 w-8 h-8 rounded-full bg-[#a66d4f] text-[#fcfbf9] font-space font-bold flex items-center justify-center text-sm">3</span>
+          <div><h3 class="font-space font-bold text-[#433e3c]">Buscá el lugar más cercano</h3><p class="text-sm text-[#5a5451] leading-relaxed mt-1">Escribí tu calle, barrio o localidad en el buscador, o tocá un círculo del mapa para acercarte. Cada pin muestra dirección, horario y un botón para llegar con Google Maps.</p></div></li>
+        <li class="flex gap-4"><span class="shrink-0 w-8 h-8 rounded-full bg-[#798f75] text-[#fcfbf9] font-space font-bold flex items-center justify-center text-sm">4</span>
+          <div><h3 class="font-space font-bold text-[#433e3c]">Si querés denunciar</h3><p class="text-sm text-[#5a5451] leading-relaxed mt-1">No necesitás abogado para hacer la denuncia y podés ir con alguien de confianza. Llevá tu DNI si lo tenés.</p></div></li>
+        <li class="flex gap-4"><span class="shrink-0 w-8 h-8 rounded-full bg-[#c29d71] text-[#fcfbf9] font-space font-bold flex items-center justify-center text-sm">5</span>
+          <div><h3 class="font-space font-bold text-[#433e3c]">Guardá lo que pueda servir</h3><p class="text-sm text-[#5a5451] leading-relaxed mt-1">Mensajes, capturas, fotos o certificados médicos pueden ayudar después, aunque hoy no decidas denunciar.</p></div></li>
+      </ol>
+      <button data-modal="modal-ayuda modal-urgencias" class="w-full mt-7 bg-[#ebd4d6] text-[#8e4a55] font-space font-bold py-3.5 rounded-xl hover:bg-[#dfc4c7] transition">Ver todas las líneas de urgencia</button>
+      <p class="text-center mt-5"><button data-modal="modal-ayuda" data-accion="abrirLogin" class="text-xs text-[#b1a591] hover:text-[#756f6b] underline decoration-dotted">Acceso para administración</button></p>
+    </div>
+  </div>
+</div>
+
+<input id="hp-web" name="web" type="text" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
+
+<div id="modal-llamar" class="modal-wrap fixed inset-0 bg-black/40 z-[740] hidden flex-col items-center justify-center p-4 backdrop-blur-sm">
+  <div class="modal-box bg-[#fcfbf9] w-full max-w-sm rounded-3xl p-7 shadow-2xl text-center">
+    <p id="llamar-nombre" class="font-space font-bold text-[#756f6b] text-sm mb-1"></p>
+    <p id="llamar-numero" class="font-space font-bold text-3xl text-[#433e3c] mb-6 tracking-wide"></p>
+    <a id="llamar-link" data-directo="1" target="_blank" rel="noopener" class="block w-full bg-[#798f75] text-[#fcfbf9] font-space font-bold py-4 rounded-xl hover:bg-[#687e64] transition text-lg">📞 Llamar</a>
+    <button data-accion="copiarLlamada" class="w-full mt-3 bg-[#f2efe9] text-[#5a5451] font-space font-bold py-3.5 rounded-xl hover:bg-[#e8e4dc] transition">Copiar número</button>
+    <p class="text-xs text-[#9e9791] mt-4 leading-relaxed">Estás viendo la página dentro de otra aplicación. Si el teléfono no abre la llamada, copiá el número y marcalo. En la página publicada en internet, al tocar un número se abre directo la llamada.</p>
+  </div>
+</div>
+
+<!-- ============ MODAL ADMIN ============ -->
+<div id="modal-admin" class="modal-wrap fixed inset-0 bg-black/30 z-[700] hidden flex-col items-center justify-center p-4 backdrop-blur-sm">
+  <div class="bg-[#fcfbf9] rounded-3xl w-full max-w-sm shadow-2xl overflow-hidden flex flex-col modal-box">
+    <div class="p-6 border-b border-[#ece8e0] flex justify-between items-center bg-[#faf8f5]">
+      <h2 class="text-xl font-space font-bold text-[#433e3c]">🔑 Administración</h2>
+      <button data-modal="modal-admin" class="text-[#8c8580] hover:text-[#433e3c] text-3xl leading-none">&times;</button>
+    </div>
+    <div id="form-admin" data-enviar="iniciarSesionAdmin" class="p-6 space-y-4">
+      <p class="text-sm text-[#756f6b] leading-relaxed">Con una cuenta de administración podés editar y eliminar lugares, números y categorías.</p>
+      <div><label class="block text-sm font-bold text-[#756f6b] mb-1">Email</label><input required id="a-email" type="email" autocomplete="username" class="w-full border border-[#dcd6cf] rounded-xl p-3 bg-[#faf8f5] outline-none focus:border-[#a66d4f]"></div>
+      <div><label class="block text-sm font-bold text-[#756f6b] mb-1">Contraseña</label><input required id="a-pass" type="password" autocomplete="current-password" class="w-full border border-[#dcd6cf] rounded-xl p-3 bg-[#faf8f5] outline-none focus:border-[#a66d4f]"></div>
+      <button type="button" data-accion="enviarForm" class="w-full bg-[#5a5451] text-[#fcfbf9] font-space font-bold py-3.5 rounded-xl hover:bg-[#433e3c] transition">Entrar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="fixed left-1/2 -translate-x-1/2 bg-[#798f75] text-[#fcfbf9] px-6 py-3 rounded-full shadow-lg font-space font-bold transition-all duration-300 opacity-0 pointer-events-none z-[1000] text-center" style="top: calc(var(--header-h, 130px) + 16px)">Listo ✓</div>
+
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>
